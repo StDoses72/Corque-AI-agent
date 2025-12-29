@@ -6,12 +6,14 @@ import time
 
 class chatter:
     def __init__(self):
-        self.model = 'gpt-oss:20b'
-        self.chatHistory = []
+        self.model = 'qwen3:30b'
+        self.chatHistory = [{'role': 'system', 'content': 'You are a sophisticated AI Assistant. Your name is Corque. You are able to use tools to help users get informationr. You must use the tools when necessary. Do remember to do parallel function calls when needed.'}]
 
 def getWeather(location):
     '''
-    Get the temperature of a location
+    Get the temperature of a location.When asking for weather information, must use this tool. 
+    Note: This tool only accepts ONE location at a time. 
+    If you need to check multiple places, call this tool multiple times.
     Args:
         location: The name of location
     Returns:
@@ -43,20 +45,23 @@ def runAgent(chatter):
         tools=[getWeather]
     )
     content = response.message.content
-    chatter.chatHistory.append({'role': 'assistant', 'content': content})
+    chatter.chatHistory.append(response.message)
     if response.message.tool_calls:
+        print("工具调用中...")
+        print(response.message.tool_calls)
         for call in response.message.tool_calls:
             if call.function.name == 'getWeather':
                 result = getWeather(**call.function.arguments)
             else:
                 result = 'Unknown Tools'
             chatter.chatHistory.append({'role': 'tool',  'tool_name': call.function.name, 'content': str(result)})
-            finalResponse = ollama.chat(
-                model = chatter.model,
-                messages=chatter.chatHistory,
-                tools=[getWeather]
-            )
-            print(f'Assistant: {finalResponse.message.content}')
+        finalResponse = ollama.chat(
+            model = chatter.model,
+            messages=chatter.chatHistory,
+            tools=[getWeather]
+        )
+        print(f'Assistant: {finalResponse.message.content}')
+        chatter.chatHistory.append(finalResponse.message)
     else:
         print(f"Assistant: {content}")
 

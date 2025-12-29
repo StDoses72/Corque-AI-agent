@@ -19,8 +19,8 @@ def getWeather(location):
     '''
     def searchWeather(location):
         try:
-            jsonurl = f"https://wttr.in/{location}?format=j1"#'https://api.open-meteo.com/v1/forecast?latitude=31.2222&longitude=121.4581&current=temperature_2m,relative_humidity_2m'
-            jsonresponse = requests.get(jsonurl)
+            # jsonurl = f"https://wttr.in/{location}?format=j1"#'https://api.open-meteo.com/v1/forecast?latitude=31.2222&longitude=121.4581&current=temperature_2m,relative_humidity_2m'
+            # jsonresponse = requests.get(jsonurl)
             startTime = time.time()
             url = f"https://wttr.in/{location}?format=3"
             response = requests.get(url,timeout=10)

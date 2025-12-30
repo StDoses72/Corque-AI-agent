@@ -38,7 +38,7 @@ class emailTool:
     
 class chatter:
     def __init__(self):
-        self.model = 'qwen2.5:32b'
+        self.model = 'qwen3:14b'
         self.chatHistory = [{'role': 'system', 'content': 'You are a sophisticated AI Assistant. Your name is Corque. You are able to use tools to help users get information. You must use the tools when necessary. Do remember to do parallel function calls when needed.'}]
         self.weather = weatherTool()
         self.email = emailTool()

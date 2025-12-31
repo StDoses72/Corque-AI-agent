@@ -70,7 +70,8 @@ class chatter:
             finalResponse = ollama.chat(
                 model = self.model,
                 messages=self.chatHistory,
-                tools=self.tools
+                tools=self.tools,
+                think=False
             )
             print(f'Assistant: {finalResponse.message.content}')
             self.chatHistory.append(finalResponse.message)

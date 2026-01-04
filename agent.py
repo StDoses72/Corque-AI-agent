@@ -97,7 +97,7 @@ class chatter:
         self.modelName = "qwen3:14b"
         self.systemPrompt = 'You are a sophisticated AI Assistant. Your name is Corque. You are able to use tools to help users get information. You must use the tools when necessary. Do remember to do parallel function calls when needed.'
         self.weather = weatherTool()
-        self.email = emailTool('stephen_xu2005@126.com','JXYKm7S9tNhKZgUE','smtp.126.com','imap.126.com')
+        self.email = emailTool(emailUser,emailPass,smtpServer,imapServer)
         self.tools = [self.weather.getWeather, self.email.sendEmail]
         self.model = ChatOllama(
             model=self.modelName,

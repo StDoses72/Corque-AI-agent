@@ -1,4 +1,3 @@
-import ollama
 import json
 import requests
 import time
@@ -7,6 +6,11 @@ import imaplib
 import os
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
+from langchain_ollama import ChatOllama
+from langchain.agents import create_agent
+from langchain_core.tools import tool
+from langgraph.checkpoint.memory import InMemorySaver
+
 load_dotenv()
 emailUser = os.getenv("OTS_EMAIL_USER")
 emailPass = os.getenv("OTS_EMAIL_PASS")
@@ -79,7 +83,7 @@ class emailTool:
                 self.stmpOBJ.quit()
                 return 'Email sent successfully.'
             except Exception as e:
-                if i<numOfRetries-1:
+                if i<=numOfRetries-1:
                     print(f"Retrying to send email... Attempt {i+1}")
                     time.sleep(1)  # Wait before retrying
                     continue
@@ -90,61 +94,32 @@ class emailTool:
     
 class chatter:
     def __init__(self):
-        self.model = 'qwen3:14b'
-        self.chatHistory = [{'role': 'system', 'content': 'You are a sophisticated AI Assistant. Your name is Corque. You are able to use tools to help users get information. You must use the tools when necessary. Do remember to do parallel function calls when needed.'}]
+        self.modelName = "qwen3:14b"
+        self.systemPrompt = 'You are a sophisticated AI Assistant. Your name is Corque. You are able to use tools to help users get information. You must use the tools when necessary. Do remember to do parallel function calls when needed.'
         self.weather = weatherTool()
         self.email = emailTool('stephen_xu2005@126.com','JXYKm7S9tNhKZgUE','smtp.126.com','imap.126.com')
         self.tools = [self.weather.getWeather, self.email.sendEmail]
+        self.model = ChatOllama(
+            model=self.modelName,
+            temperature=0
+        )
+        self.agent = create_agent(self.model, tools=self.tools, checkpointer=InMemorySaver(), system_prompt= self.systemPrompt)
 
     
 
 
-
     def runAgent(self):
-        userInput = input("User: ")
-        self.chatHistory.append({'role': 'user', 'content': userInput})
-        response = ollama.chat(
-            model = self.model,
-            messages=self.chatHistory,
-            tools=self.tools
-        )
-        content = response.message.content
-        self.chatHistory.append(response.message)
-        if response.message.tool_calls:
-            print("Using Tools......")
-            print(response.message.tool_calls)
-            for call in response.message.tool_calls:
-                if call.function.name == 'getWeather':
-                    try:
-                        result = self.weather.getWeather(**call.function.arguments)
-                    except Exception as e:
-                        result = f'Sorry, I couldn\'t find the weather for that location. Error: {str(e)}'                    
-                elif call.function.name == 'sendEmail':
-                    try:
-                        self.email.sendEmail(**call.function.arguments)
-                        result = 'Email sent successfully.'
-                    except Exception as e:
-                        result = f'Sorry, I was unable to send the email at this time. Error: {str(e)}'
-                else:
-                    result = 'Unknown Tools'
-                self.chatHistory.append({'role': 'tool',  'tool_name': call.function.name, 'content': str(result)})
-            finalResponse = ollama.chat(
-                model = self.model,
-                messages=self.chatHistory,
-                tools=self.tools,
-                think=False
-            )
-            print(f'Assistant: {finalResponse.message.content}')
-            self.chatHistory.append(finalResponse.message)
-        else:
-            print(f"Assistant: {content}")
-
+        pass
+                       
 
 
 def main():
     Corque = chatter()
     while True:
-        Corque.runAgent()
+        config = {'configurable': {'thread_id': '1'}}
+        question = input("User: ")
+        response = Corque.agent.invoke({'messages':[{'role':'user','content':question}]},config)
+        print(f'Assistant: {response["messages"][-1].content}')
 
 if __name__ == "__main__":
     main()

@@ -47,7 +47,7 @@ class emailTool:
         self.emailPassword = emailPassword
         self.smtpServer = smtpServer
         self.imapServer = imapServer
-        self.stmpOBJ = smtplib.SMTP_SSL(self.smtpServer, 465)
+        
         
     def sendEmail(self,recipientEmail,subject,body):
         '''
@@ -65,11 +65,12 @@ class emailTool:
         Returns:
             str: A confirmation message if the email is sent successfully, or an error message otherwise.
         '''
+        self.stmpOBJ = smtplib.SMTP_SSL(self.smtpServer, 465)
+        self.stmpOBJ.login(self.emailAddress, self.emailPassword)
         numOfRetries = 3
         for i in range(numOfRetries):
             try:
                 time.sleep(0.5)  # To avoid rapid successive connections
-                self.stmpOBJ.login(self.emailAddress, self.emailPassword)
                 MSG = MIMEText(body)
                 MSG['Subject'] = subject
                 MSG['From'] = self.emailAddress
@@ -82,6 +83,8 @@ class emailTool:
                     print(f"Retrying to send email... Attempt {i+1}")
                     time.sleep(1)  # Wait before retrying
                     continue
+                print(f"Failed to send email after {numOfRetries} attempts.")
+                self.stmpOBJ.quit()
                 return f'Error happens in sending email: {str(e)}'
 
     

@@ -1,6 +1,7 @@
 from core.agent import Agent
-
+from tools.todoList import initTodoList
 def main():
+    initTodoList()
     Corque = Agent()
     print('Corque is ready to assist you! Type quit to exit.')
     while True:

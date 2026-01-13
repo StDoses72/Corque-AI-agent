@@ -1,12 +1,13 @@
 import smtplib
+import imaplib
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
 import os
 load_dotenv()
-email_user = os.getenv("EMAIL_USER")
-email_pass = os.getenv("EMAIL_PASS")
-smtp_server = os.getenv("SMTP_SERVER")
-imap_server = os.getenv("IMAP_SERVER")
+email_user = os.getenv("OTS_EMAIL_USER")
+email_pass = os.getenv("OTS_EMAIL_PASS")
+smtp_server = os.getenv("OTS_SMTP_SERVER")
+imap_server = os.getenv("OTS_IMAP_SERVER")
 
 
 class emailTool:
@@ -16,6 +17,7 @@ class emailTool:
         self.smtpServer = smtpServer
         self.imapServer = imapServer
         self.stmpOBJ = smtplib.SMTP_SSL(self.smtpServer, 465)
+        self.imapOBJ = imaplib.IMAP4_SSL(self.imapServer)
     def sendEmail(self,recipientEmail,subject,body):
         self.stmpOBJ.login(self.emailAddress, self.emailPassword)
         MSG = MIMEText(body)
@@ -24,7 +26,18 @@ class emailTool:
         MSG['To'] = recipientEmail
         self.stmpOBJ.send_message(MSG)
         self.stmpOBJ.quit()
+    def getEmail(self):
+        self.imapOBJ.login(self.emailAddress, self.emailPassword)
+        s,data = self.imapOBJ.select("INBOX")
+        if s == "OK":
+            print(data)
+        else:
+            print("Failed to select INBOX")
+            return None
+        status, email_ids = self.imapOBJ.search(None, "ALL")
+        print(status)
+        print(email_ids)
+        return email_ids
 if __name__ == "__main__":
     email_tool = emailTool(email_user,email_pass,smtp_server,imap_server)
-    email_tool.sendEmail("stephen_xu2005@126.com", "Test Subject", "Test Body")
-    print("Email sent successfully.")
+    print(email_tool.getEmail())

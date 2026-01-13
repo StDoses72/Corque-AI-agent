@@ -1,10 +1,10 @@
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import os
 
 baseDir = Path(__file__).resolve().parent.parent
 
-load_dotenv()
+load_dotenv(find_dotenv())
 
 class Settings:
     def __init__(self):

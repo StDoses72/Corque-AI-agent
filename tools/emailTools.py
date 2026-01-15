@@ -37,7 +37,7 @@ def sendEmail(recipientEmail,subject,body):
             stmpOBJ.quit()
             return 'Email sent successfully.'
         except Exception as e:
-            if i<=numOfRetries-1:
+            if i<numOfRetries-1:
                 print(f"Retrying to send email... Attempt {i+1}")
                 time.sleep(1)  # Wait before retrying
                 continue

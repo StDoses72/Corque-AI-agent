@@ -2,20 +2,22 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from config.settings import settings
-from tools import getWeather, sendEmail, getEmail
+from tools import getWeather, sendEmail, getEmail, addTodo, getUTCNow
 
 
 class Agent:
     def __init__(self):
         self.systemPrompt = ''' 
-        'You are a sophisticated AI Assistant. Your name is Corque. 
+        You are a sophisticated AI Assistant. Your name is Corque. 
         You are able to use tools to help users get information. You must use the tools when necessary.
         Do remember to do parallel function calls when needed.
         '''
         self.tools = [
             getWeather,
             sendEmail,
-            getEmail
+            getEmail,
+            addTodo,
+            getUTCNow
         ]
         self.model = ChatOllama(
             model=settings.modelName,

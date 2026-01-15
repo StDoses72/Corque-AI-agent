@@ -1,8 +1,11 @@
 from datetime import datetime, timezone
-from langchain_core.tools import tool
 
+def getUTCNow():
+    '''
+    Gets the current UTC time.
+    '''
+    return datetime.now(timezone.utc)
 
-@tool
 def convertISOToUTCEpoch(isoTimeString: str) -> int:
     '''
     Converts an ISO format time string to UTC epoch seconds (UTC时间戳秒数).
@@ -49,3 +52,7 @@ def convertISOToUTCEpoch(isoTimeString: str) -> int:
         return f'Error: Invalid ISO time format. {str(e)}'
     except Exception as e:
         return f'Error happens in converting ISO time to UTC epoch seconds: {str(e)}'
+
+
+
+

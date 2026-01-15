@@ -2,7 +2,7 @@ import sqlite3
 import time
 from langchain_core.tools import tool
 from config.settings import settings
-from .timeTools import convertISOToUTCEpoch, getUTCNow
+from .timeTools import convertISOToUTCEpoch, getUTCNow, convertUTCEpochToISO, convertUTCToLocal
 
 
 
@@ -61,4 +61,42 @@ def addTodo(title, dueDate, description=None):
     conn.commit()
     conn.close()
     return "Task added successfully."
-    
+
+@tool
+def getTodoListinDaysFromNow(days):
+    '''
+    Get the todo list with the due date within the days from now.
+    The due date is in UTC time.
+    You can use `convertUTCEpochToISO(epochSeconds)` to convert the due date in UTC epoch seconds to ISO time string.
+    You can use `convertUTCToLocal(isoTimeString)` to convert the due date in ISO time string to local time string.
+    The local time is in the system's local timezone.
+    The local timezone is the timezone of the system.
+    Args:
+        days (int): The number of days from now.
+    Returns:
+        list: A list of todo list with the due date in local time string.
+    '''
+    conn = sqlite3.connect(settings.todoListPath)
+    cur = conn.cursor()
+    currentUTCEpoch = getCurrentUTCEpoch()
+    cur.execute('''SELECT * FROM todoList 
+    WHERE dueAtUTC IS NOT NULL AND dueAtUTC-?<=?*24*60*60 AND dueAtUTC>=? 
+    ORDER BY dueAtUTC ASC''',(currentUTCEpoch,days,currentUTCEpoch))
+    todoList = cur.fetchall()
+    if len(todoList) == 0:
+        conn.close()
+        return "No todo list found."
+    else:
+        conn.close()
+        localTodoList = []
+        for todo in todoList:
+            localTodoList.append({'id': todo[0], 
+                                'title': todo[1], 
+                                'description': todo[2],
+                                'status': todo[3], 
+                                'dueAtLocal': convertUTCToLocal(convertUTCEpochToISO(todo[5]), localTimeZone=settings.localTimeZone),
+                                'createdAtLocal': convertUTCToLocal(convertUTCEpochToISO(todo[4]), localTimeZone=settings.localTimeZone),
+                                'daysFromNow': (todo[5] - currentUTCEpoch) / (24 * 60 * 60)})
+        return localTodoList
+
+

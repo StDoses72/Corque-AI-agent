@@ -1,5 +1,6 @@
 from pathlib import Path
 from dotenv import load_dotenv, find_dotenv
+from tzlocal import get_localzone
 import os
 
 baseDir = Path(__file__).resolve().parent.parent
@@ -14,5 +15,6 @@ class Settings:
         self.imapServer = os.getenv('OTS_IMAP_SERVER')
         self.modelName = 'qwen3:8b'
         self.todoListPath = baseDir / 'data' / 'todoList.db'
+        self.localTimeZone = str(get_localzone())
 
 settings = Settings()

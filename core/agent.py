@@ -37,7 +37,7 @@ class Agent:
         When multiple tools could be used:
         - You may use them in parallel if appropriate.
         - Ensure the final response is clean, natural, and user-facing only.
-
+        Once you deliver the requested output, stop. Do not continue with extra suggestions unless asked.
         '''
         self.tools = [
             getWeather,
@@ -51,7 +51,8 @@ class Agent:
         ]
         self.model = ChatOllama(
             model=settings.modelName,
-            temperature=0.2
+            temperature=0.2,
+            stream=True
         )
         self.agent = create_agent(self.model, tools=self.tools, checkpointer=InMemorySaver(), system_prompt=self.systemPrompt)
 

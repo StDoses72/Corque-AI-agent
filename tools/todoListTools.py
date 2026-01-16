@@ -99,4 +99,79 @@ def getTodoListinDaysFromNow(days):
                                 'daysFromNow': (todo[5] - currentUTCEpoch) / (24 * 60 * 60)})
         return localTodoList
 
+@tool
+def getMostRecentTodo(numberOfTodos:int=2):
+    '''
+    Get the most recent todo list.
+    The todo list is in the local time.
+    The todo list is in the order of the due date.
+    Args:
+        numberOfTodos (int): The number of todos to get. Default is 2.
+    Returns:
+        list: A list of todo list with the due date in local time string.
+    '''
+    conn = sqlite3.connect(settings.todoListPath)
+    cur = conn.cursor()
+    cur.execute('''SELECT * FROM todoList WHERE status = 'pending' ORDER BY dueAtUTC ASC LIMIT ?''',(numberOfTodos))
+    todoList = cur.fetchall()
+    if len(todoList) == 0:
+        conn.close()
+        return "No todo list found."
+    else:
+        conn.close()
+        localTodoList = []
+        for todo in todoList:
+            localTodoList.append({'id': todo[0],
+                                'title': todo[1],
+                                'description': todo[2],
+                                'status': todo[3],
+                                'dueAtLocal': convertUTCToLocal(convertUTCEpochToISO(todo[5]), localTimeZone=settings.localTimeZone),
+                                'createdAtLocal': convertUTCToLocal(convertUTCEpochToISO(todo[4]), localTimeZone=settings.localTimeZone),
+                                'daysFromNow': (todo[5] - getCurrentUTCEpoch()) / (24 * 60 * 60)})
+        return localTodoList
 
+@tool
+def deleteTodo(todoId):
+    '''
+    Delete a todo from the todo list.
+    The todo is deleted from the todo list database.
+    Args:
+        todoId (int): The id of the todo to delete.
+    Returns:
+        str: A confirmation message if the todo is deleted successfully.
+    '''
+    conn = sqlite3.connect(settings.todoListPath)
+    cur = conn.cursor()
+    cur.execute('''UPDATE todoList SET status = 'completed' WHERE id = ?''',(todoId,))
+    print('Are your sure you want to delete the todo?')
+    confirmation = input('Enter y to confirm, n to cancel: ')
+    if confirmation in ('y', 'Y', 'yes', 'Yes', 'YES'):
+        conn.commit()
+        conn.close()
+        return 'Todo deleted successfully.'
+    else:
+        conn.close()
+        return 'Todo deletion cancelled.'
+
+@tool
+def changeTodoStatus(todoId, status):
+    '''
+    Change the status of a todo.
+    The status is changed in the todo list database.
+    Args:
+        todoId (int): The id of the todo to change the status.
+        status (str): The status to change to.
+    Returns:
+        str: A confirmation message if the status is changed successfully.
+    '''
+    print('Are your sure you want to change the status of the todo?')
+    confirmation = input('Enter y to confirm, n to cancel: ')
+    if confirmation in ('y', 'Y', 'yes', 'Yes', 'YES'):
+        conn = sqlite3.connect(settings.todoListPath)
+        cur = conn.cursor()
+        cur.execute('''UPDATE todolist SET status = ? WHERE id = ?''',(status,todoId))
+        conn.commit()
+        conn.close()
+        return 'Todo status changed successfully.'
+    else:
+        return 'Todo status change cancelled.'

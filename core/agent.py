@@ -2,7 +2,7 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from config.settings import settings
-from tools import getWeather, sendEmail, getEmail, addTodo, getUTCNow, getTodoListinDaysFromNow, convertUTCEpochToISO, convertUTCToLocal
+from tools import getWeather, sendEmail, getEmail, addTodo, getUTCNow, getTodoListinDaysFromNow, convertUTCEpochToISO, convertUTCToLocal, deleteTodo, getMostRecentTodo, changeTodoStatus
 
 
 class Agent:
@@ -34,6 +34,9 @@ class Agent:
         - Output only the requested content itself.
         - Do not include advice, analysis, or next-step suggestions unless explicitly requested.
 
+        When writing emails or messages that will be sent using tools:
+        - Do not include a signature, closing, or sender name. The system will add it automatically.
+
         When multiple tools could be used:
         - You may use them in parallel if appropriate.
         - Ensure the final response is clean, natural, and user-facing only.
@@ -47,7 +50,10 @@ class Agent:
             getUTCNow,
             getTodoListinDaysFromNow,
             convertUTCEpochToISO,
-            convertUTCToLocal
+            convertUTCToLocal,
+            deleteTodo,
+            getMostRecentTodo,
+            changeTodoStatus
         ]
         self.model = ChatOllama(
             model=settings.modelName,

@@ -13,7 +13,7 @@ class Settings:
         self.emailPass = os.getenv('OTS_EMAIL_PASS')
         self.smtpServer = os.getenv('OTS_SMTP_SERVER')
         self.imapServer = os.getenv('OTS_IMAP_SERVER')
-        self.modelName = 'qwen3:8b'
+        self.modelName = 'llama3.1:8b'
         self.todoListPath = baseDir / 'data' / 'todoList.db'
         self.localTimeZone = str(get_localzone())
 

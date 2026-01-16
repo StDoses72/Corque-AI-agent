@@ -7,7 +7,7 @@ from langchain_core.tools import tool
 
 
 @tool
-def sendEmail(recipientEmail,subject,body):
+def sendEmail(recipientEmail,subject,body,fromWho = 'XiangCheng Xu'):
     '''
     Sends an email to a specified recipient with a subject and message body. (向指定收件人发送电子邮件)
     If the email fails to send, respond with "Sorry, I was unable to send the email at this time."
@@ -18,7 +18,8 @@ def sendEmail(recipientEmail,subject,body):
         subject (str): The subject line of the email. It should be concise and relevant.
                     This argument is required.
         body (str): The main content or message of the email. 
-                    This argument is required.
+                    This argument is required. You should add the greeting at the beginning of the body.
+        fromWho (str): The name of the sender. Default is 'XiangCheng Xu'.
 
     Returns:
         str: A confirmation message if the email is sent successfully, or an error message otherwise.
@@ -29,7 +30,8 @@ def sendEmail(recipientEmail,subject,body):
     for i in range(numOfRetries):
         try:
             time.sleep(0.5)  # To avoid rapid successive connections
-            MSG = MIMEText(body)
+            fullBody = f'{body} \n\nBest regards,\n{fromWho}'
+            MSG = MIMEText(fullBody)
             MSG['Subject'] = subject
             MSG['From'] = settings.emailUser
             MSG['To'] = recipientEmail

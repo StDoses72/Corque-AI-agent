@@ -7,7 +7,7 @@ from .timeTools import convertISOToUTCEpoch, getUTCNow, convertUTCEpochToISO, co
 
 
 def initTodoList():
-    conn = sqlite3.connect(settings.todoListPath)
+    conn = sqlite3.connect(settings.dataBasePath)
     cur = conn.cursor()
     cur.execute('''
     CREATE TABLE IF NOT EXISTS todoList (
@@ -53,7 +53,7 @@ def addTodo(title, dueDate, description=None):
     Raises:
         Exception: Propagates database or parsing errors (caller may catch and respond).
     '''
-    conn = sqlite3.connect(settings.todoListPath)
+    conn = sqlite3.connect(settings.dataBasePath)
     cur = conn.cursor()
     cur.execute('''INSERT INTO todoList (title, description, status, createdAtUTC, dueAtUTC)
     VALUES (?, ?, 'pending', ?, ?)
@@ -76,7 +76,7 @@ def getTodoListinDaysFromNow(days):
     Returns:
         list: A list of todo list with the due date in local time string.
     '''
-    conn = sqlite3.connect(settings.todoListPath)
+    conn = sqlite3.connect(settings.dataBasePath)
     cur = conn.cursor()
     currentUTCEpoch = getCurrentUTCEpoch()
     cur.execute('''SELECT * FROM todoList 
@@ -110,7 +110,7 @@ def getMostRecentTodo(numberOfTodos:int=2):
     Returns:
         list: A list of todo list with the due date in local time string.
     '''
-    conn = sqlite3.connect(settings.todoListPath)
+    conn = sqlite3.connect(settings.dataBasePath)
     cur = conn.cursor()
     cur.execute('''SELECT * FROM todoList WHERE status = 'pending' ORDER BY dueAtUTC ASC LIMIT ?''',(numberOfTodos))
     todoList = cur.fetchall()
@@ -140,7 +140,7 @@ def deleteTodo(todoId):
     Returns:
         str: A confirmation message if the todo is deleted successfully.
     '''
-    conn = sqlite3.connect(settings.todoListPath)
+    conn = sqlite3.connect(settings.dataBasePath)
     cur = conn.cursor()
     cur.execute('''UPDATE todoList SET status = 'completed' WHERE id = ?''',(todoId,))
     print('Are your sure you want to delete the todo?')
@@ -167,7 +167,7 @@ def changeTodoStatus(todoId, status):
     print('Are your sure you want to change the status of the todo?')
     confirmation = input('Enter y to confirm, n to cancel: ')
     if confirmation in ('y', 'Y', 'yes', 'Yes', 'YES'):
-        conn = sqlite3.connect(settings.todoListPath)
+        conn = sqlite3.connect(settings.dataBasePath)
         cur = conn.cursor()
         cur.execute('''UPDATE todolist SET status = ? WHERE id = ?''',(status,todoId))
         conn.commit()

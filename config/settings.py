@@ -13,8 +13,8 @@ class Settings:
         self.emailPass = os.getenv('OTS_EMAIL_PASS')
         self.smtpServer = os.getenv('OTS_SMTP_SERVER')
         self.imapServer = os.getenv('OTS_IMAP_SERVER')
-        self.modelName = 'llama3.1:8b'
-        self.todoListPath = baseDir / 'data' / 'todoList.db'
+        self.modelName = 'gpt-oss:20b'
+        self.dataBasePath = baseDir / 'data' / 'CorqueDB.db'
         self.localTimeZone = str(get_localzone())
 
 settings = Settings()

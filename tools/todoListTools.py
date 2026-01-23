@@ -112,7 +112,7 @@ def getMostRecentTodo(numberOfTodos:int=2):
     '''
     conn = sqlite3.connect(settings.dataBasePath)
     cur = conn.cursor()
-    cur.execute('''SELECT * FROM todoList WHERE status = 'pending' ORDER BY dueAtUTC ASC LIMIT ?''',(numberOfTodos))
+    cur.execute('''SELECT * FROM todoList WHERE status = 'pending' ORDER BY dueAtUTC ASC LIMIT ?''',(numberOfTodos,))
     todoList = cur.fetchall()
     if len(todoList) == 0:
         conn.close()
@@ -133,7 +133,7 @@ def getMostRecentTodo(numberOfTodos:int=2):
 @tool
 def deleteTodo(todoId):
     '''
-    Delete a todo from the todo list.
+    Delete a todo from the todo list. Or mark a todo as completed.
     The todo is deleted from the todo list database.
     Args:
         todoId (int): The id of the todo to delete.

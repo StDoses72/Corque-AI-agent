@@ -64,8 +64,7 @@ class Agent:
         )
         self.agent = create_agent(self.model, tools=self.tools, checkpointer=InMemorySaver(), system_prompt=self.systemPrompt,
         middleware=[HumanInTheLoopMiddleware(
-            interrupt_on={'deleteTodo':{'allowed_decisions':['approve','edit','reject']},
-            'sendEmail':True},
+            interrupt_on={'sendEmail':True},
             description_prefix="Tool execution pending approval"
         )])
         
@@ -91,73 +90,73 @@ class Agent:
                 print(value['action_requests'][0]['args']['subject']+'\n')
                 print('The body is:')
                 print(value['action_requests'][0]['args']['body']+'\n')
-            decision = input('Decision: approve, edit, or reject? (a/e/r): ')
-            if decision == 'a':
-                result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'approve'}]}),config=config)
-                return result2["messages"][-1].content
-            elif decision == 'e':
-                newRecipientEmail = value['action_requests'][0]['args']['recipientEmail']
-                newSubject = value['action_requests'][0]['args']['subject']
-                newBody = value['action_requests'][0]['args']['body']
-                while True:
-                    print("\nCurrent draft:")
-                    print(f"  To: {newRecipientEmail}")
-                    print(f"  Subject: {newSubject}")
-                    print("  Body:")
-                    print(newBody)
-                    print("----------------------------------")
-                    editionChoice = input("Edit: recipientEmail(r), subject(s), body(b).Press view(v), done(d), cancel(c) for command: ").strip().lower()
-                    if editionChoice == 'r':
-                        newRecipientEmail = input('New recipient email: ')
-                    elif editionChoice == 's':
-                        newSubject = input('New subject: ')
-                    elif editionChoice == 'b':
-                        print("New body(finish with END):")
-                        lines = []
-                        while True:
-                            line = input()
-                            if line.strip().lower() == 'end':
-                                break
-                            lines.append(line)
-                        if lines:
-                            newBody = '\n'.join(lines)
-                    elif editionChoice == 'v':
-                        continue
-                    elif editionChoice == 'd':
-                        break
-                    elif editionChoice == 'c':
-                        print("Email editing cancelled.")
-                        return 'Email editing cancelled.'
-                    else:
-                        print("Invalid command. Please try again.")
-                        continue
+                decision = input('Decision: approve, edit, or reject? (a/e/r): ')
+                if decision == 'a':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'approve'}]}),config=config)
+                    return result2["messages"][-1].content
+                elif decision == 'e':
+                    newRecipientEmail = value['action_requests'][0]['args']['recipientEmail']
+                    newSubject = value['action_requests'][0]['args']['subject']
+                    newBody = value['action_requests'][0]['args']['body']
+                    while True:
+                        print("\nCurrent draft:")
+                        print(f"  To: {newRecipientEmail}")
+                        print(f"  Subject: {newSubject}")
+                        print("  Body:")
+                        print(newBody)
+                        print("----------------------------------")
+                        editionChoice = input("Edit: recipientEmail(r), subject(s), body(b).Press view(v), done(d), cancel(c) for command: ").strip().lower()
+                        if editionChoice == 'r':
+                            newRecipientEmail = input('New recipient email: ')
+                        elif editionChoice == 's':
+                            newSubject = input('New subject: ')
+                        elif editionChoice == 'b':
+                            print("New body(finish with END):")
+                            lines = []
+                            while True:
+                                line = input()
+                                if line.strip().lower() == 'end':
+                                    break
+                                lines.append(line)
+                            if lines:
+                                newBody = '\n'.join(lines)
+                        elif editionChoice == 'v':
+                            continue
+                        elif editionChoice == 'd':
+                            break
+                        elif editionChoice == 'c':
+                            print("Email editing cancelled.")
+                            return 'Email editing cancelled.'
+                        else:
+                            print("Invalid command. Please try again.")
+                            continue
 
-                result2 = self.agent.invoke(
-    Command(
-        # Decisions are provided as a list, one per action under review.
-        # The order of decisions must match the order of actions
-        # listed in the `__interrupt__` request.
-        resume={
-            "decisions": [
-                {
-                    "type": "edit",
-                    # Edited action with tool name and args
-                    "edited_action": {
-                        # Tool name to call.
-                        # Will usually be the same as the original action.
-                        "name": "sendEmail",
-                        # Arguments to pass to the tool.
-                        "args": {"recipientEmail": newRecipientEmail, "subject": newSubject, "body": newBody},
-                    }
-                }
-            ]
-        }
-    ),
-    config=config  # Same thread ID to resume the paused conversation
-)
-                return result2["messages"][-1].content
-            elif decision == 'r':
-                result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'reject'}]}),config=config)
-                print('The attempt to send the email is rejected.'+'\n')
-                return result2["messages"][-1].content
+                    result2 = self.agent.invoke(
+                    Command(
+                        # Decisions are provided as a list, one per action under review.
+                        # The order of decisions must match the order of actions
+                        # listed in the `__interrupt__` request.
+                        resume={
+                            "decisions": [
+                                {
+                                    "type": "edit",
+                                    # Edited action with tool name and args
+                                    "edited_action": {
+                                        # Tool name to call.
+                                        # Will usually be the same as the original action.
+                                        "name": "sendEmail",
+                                        # Arguments to pass to the tool.
+                                        "args": {"recipientEmail": newRecipientEmail, "subject": newSubject, "body": newBody},
+                                    }
+                                }
+                            ]
+                        }
+                    ),
+                    config=config  # Same thread ID to resume the paused conversation
+                )
+                    return result2["messages"][-1].content
+                elif decision == 'r':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'reject'}]}),config=config)
+                    print('The attempt to send the email is rejected.'+'\n')
+                    return result2["messages"][-1].content
         return response["messages"][-1].content

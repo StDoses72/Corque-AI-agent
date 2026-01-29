@@ -60,7 +60,8 @@ class Agent:
         self.model = ChatOllama(
             model=settings.modelName,
             temperature=0.2,
-            stream=True
+            num_threads=settings.numOfThreads,
+            num_gpu=99
         )
         self.agent = create_agent(self.model, tools=self.tools, checkpointer=InMemorySaver(), system_prompt=self.systemPrompt,
         middleware=[HumanInTheLoopMiddleware(

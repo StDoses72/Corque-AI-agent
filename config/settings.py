@@ -16,5 +16,6 @@ class Settings:
         self.modelName = 'gpt-oss:20b'
         self.dataBasePath = baseDir / 'data' / 'CorqueDB.db'
         self.localTimeZone = str(get_localzone())
+        self.numOfThreads = os.cpu_count()
 
 settings = Settings()

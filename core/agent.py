@@ -5,6 +5,7 @@ from config.settings import settings
 from tools import getWeather, sendEmail, getEmail, addTodo, getUTCNow, getTodoListinDaysFromNow, convertUTCEpochToISO, convertUTCToLocal, deleteTodo, getMostRecentTodo, changeTodoStatus
 from langchain.agents.middleware import HumanInTheLoopMiddleware
 from langgraph.types import Command
+from langchain_openai import ChatOpenAI
 import time
 
 class Agent:
@@ -61,8 +62,14 @@ class Agent:
             model=settings.modelName,
             temperature=0.2,
             num_threads=settings.numOfThreads,
-            num_gpu=99
+            num_gpu=99,
+            num_ctx=8192,
+            keep_alive=-1
         )
+        # self.model = ChatOpenAI(
+        #     model="gpt-5-nano",
+        #     api_key=settings.apiKey
+        # )
         self.agent = create_agent(self.model, tools=self.tools, checkpointer=InMemorySaver(), system_prompt=self.systemPrompt,
         middleware=[HumanInTheLoopMiddleware(
             interrupt_on={'sendEmail':True},

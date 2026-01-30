@@ -13,9 +13,11 @@ class Settings:
         self.emailPass = os.getenv('OTS_EMAIL_PASS')
         self.smtpServer = os.getenv('OTS_SMTP_SERVER')
         self.imapServer = os.getenv('OTS_IMAP_SERVER')
-        self.modelName = 'gpt-oss:20b'
+        self.modelName = 'qwen3:8b'
+        self.apiKey = os.getenv('OPENAI_API_KEY')
         self.dataBasePath = baseDir / 'data' / 'CorqueDB.db'
         self.localTimeZone = str(get_localzone())
         self.numOfThreads = os.cpu_count()
+        self.tavilyApiKey = os.getenv('TAVILY_API_KEY')
 
 settings = Settings()

@@ -11,6 +11,7 @@ def main():
             break
         response = Corque.ask(userInput)
         print('Corque: ', response)
+        print('-'*100)
 
 if __name__ == '__main__':
     main()

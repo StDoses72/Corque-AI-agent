@@ -2,8 +2,8 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from config.settings import settings
-from tools import getWeather, sendEmail, getEmail, addTodo, getUTCNow, getTodoListinDaysFromNow, convertUTCEpochToISO, convertUTCToLocal, deleteTodo, getMostRecentTodo, changeTodoStatus
-from langchain.agents.middleware import HumanInTheLoopMiddleware
+from tools import getWeather, sendEmail, getEmail, addTodo, getUTCNow, getTodoListinDaysFromNow, convertUTCEpochToISO, convertUTCToLocal, deleteTodo, getMostRecentTodo, changeTodoStatus, basicWebSearch
+from langchain.agents.middleware import HumanInTheLoopMiddleware,LLMToolSelectorMiddleware
 from langgraph.types import Command
 from langchain_openai import ChatOpenAI
 import time
@@ -45,6 +45,12 @@ class Agent:
         - Ensure the final response is clean, natural, and user-facing only.
         Once you deliver the requested output, stop. Do not continue with extra suggestions unless asked.
         '''
+        self.toolModelSystemPrompt = '''
+        You are a tool selector model for the agent.
+        You are given a task and a list of tools.
+        You need to select the most appropriate tool to use.
+        Do remember, the web search tool is only used when the user asks for information that is not available in your knowledge base, and task can not be done with other tools.
+        '''
         self.tools = [
             getWeather,
             sendEmail,
@@ -56,7 +62,8 @@ class Agent:
             convertUTCToLocal,
             deleteTodo,
             getMostRecentTodo,
-            changeTodoStatus
+            changeTodoStatus,
+            basicWebSearch
         ]
         self.model = ChatOllama(
             model=settings.modelName,
@@ -70,11 +77,19 @@ class Agent:
         #     model="gpt-5-nano",
         #     api_key=settings.apiKey
         # )
+        self.toolModel = ChatOllama(
+            model=settings.toolModelName,
+            temperature=0,
+            num_threads=settings.numOfThreads,
+            num_ctx=256,
+            keep_alive="5m"
+
+        )
         self.agent = create_agent(self.model, tools=self.tools, checkpointer=InMemorySaver(), system_prompt=self.systemPrompt,
-        middleware=[HumanInTheLoopMiddleware(
+        middleware = [HumanInTheLoopMiddleware(
             interrupt_on={'sendEmail':True},
             description_prefix="Tool execution pending approval"
-        )])
+        ), LLMToolSelectorMiddleware(model=self.toolModel,system_prompt=self.toolModelSystemPrompt)])
         
     def ask(self,query: str,threadId = 1):
         startTime = time.time()

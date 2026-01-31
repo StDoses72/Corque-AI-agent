@@ -14,6 +14,7 @@ class Settings:
         self.smtpServer = os.getenv('OTS_SMTP_SERVER')
         self.imapServer = os.getenv('OTS_IMAP_SERVER')
         self.modelName = 'qwen3:8b'
+        self.toolModelName = 'qwen3:0.6b'
         self.apiKey = os.getenv('OPENAI_API_KEY')
         self.dataBasePath = baseDir / 'data' / 'CorqueDB.db'
         self.localTimeZone = str(get_localzone())

@@ -1,7 +1,12 @@
 import smtplib
 import imaplib
 import time
+from datetime import datetime, date
+from email import message_from_bytes
+from email.header import decode_header
 from email.mime.text import MIMEText
+from email.policy import default
+from email.utils import parsedate_to_datetime
 from config.settings import settings
 from langchain_core.tools import tool
 
@@ -45,17 +50,92 @@ def sendEmail(recipientEmail,subject,body,fromWho = 'XiangCheng Xu'):
                 continue
             print(f"Failed to send email after {numOfRetries} attempts.")
             return f'Error happens in sending email: {str(e)}'
+
+
 @tool
-def getEmail():
+def getUnReademail(targetDate: str = None):
     '''
-    Retrieves the email from the specified email address.
+    Retrieves emails received on a specific date from the inbox.
+    Default is today if no date is provided.
+    Date format: "YYYY-MM-DD" (e.g., "2026-02-05").
     If the email fails to retrieve, respond with "Sorry, I couldn't find the email at this time."
     '''
     imapOBJ = imaplib.IMAP4_SSL(settings.imapServer)
     imapOBJ.login(settings.emailUser, settings.emailPass)
+    def _decode_header_value(value):
+        if not value:
+            return ""
+        decoded_parts = decode_header(value)
+        decoded_text = []
+        for part, encoding in decoded_parts:
+            if isinstance(part, bytes):
+                decoded_text.append(part.decode(encoding or "utf-8", errors="replace"))
+            else:
+                decoded_text.append(part)
+        return "".join(decoded_text)
+
+    def _extract_body(msg):
+        if msg.is_multipart():
+            for part in msg.walk():
+                content_type = part.get_content_type()
+                content_disposition = str(part.get("Content-Disposition", ""))
+                if content_type == "text/plain" and "attachment" not in content_disposition:
+                    return part.get_content()
+            return ""
+        return msg.get_content()
+
+    def _is_target_date(date_header, target_date):
+        if not date_header:
+            return False
+        try:
+            dt = parsedate_to_datetime(date_header)
+        except Exception:
+            return False
+        if dt.tzinfo is not None:
+            dt = dt.astimezone()
+        return dt.date() == target_date
+
     try:
         imapOBJ.select("INBOX")
-        status, email_ids = imapOBJ.search(None, "ALL")
-        return email_ids
-    except Exception as e:
-        return f'Error happens in retrieving email: {str(e)}'
+        if targetDate:
+            try:
+                target_date = datetime.strptime(targetDate, "%Y-%m-%d").date()
+            except Exception:
+                return "Sorry, I couldn't find the email at this time."
+        else:
+            target_date = date.today()
+
+        since_str = target_date.strftime("%d-%b-%Y")
+        status, email_ids = imapOBJ.search(None, f'(SINCE "{since_str}")')
+        if status != "OK":
+            return "Sorry, I couldn't find the email at this time."
+        if not email_ids or not email_ids[0]:
+            return []
+
+        messages = []
+        for email_id in email_ids[0].split():
+            fetch_status, data = imapOBJ.fetch(email_id, "(BODY.PEEK[])")
+            if fetch_status != "OK" or not data or not data[0]:
+                continue
+            raw_email = data[0][1]
+            msg = message_from_bytes(raw_email, policy=default)
+            if not _is_target_date(msg.get("Date"), target_date):
+                continue
+
+            messages.append({
+                "id": email_id.decode("utf-8", errors="replace"),
+                "subject": _decode_header_value(msg.get("Subject")),
+                "from": _decode_header_value(msg.get("From")),
+                "to": _decode_header_value(msg.get("To")),
+                "date": _decode_header_value(msg.get("Date")),
+                "body": _extract_body(msg),
+            })
+
+        return messages
+    except Exception:
+        return "Sorry, I couldn't find the email at this time."
+    finally:
+        try:
+            imapOBJ.logout()
+        except Exception:
+            pass

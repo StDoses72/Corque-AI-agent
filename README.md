@@ -22,7 +22,7 @@ You'll need a few things installed first:
 
 - Python 3.9 or higher
 - Ollama installed and running on your system
-- The `qwen3:8b` model in Ollama (or you can change it in the config)
+- The `gpt-oss:120b-cloud` model (or you can change it in the config)
 
 ### Installation
 
@@ -32,14 +32,14 @@ You'll need a few things installed first:
    - `langchain`
    - `langchain-ollama`
    - `langgraph`
-   - `dotenv`
+   - `python-dotenv`
    - `tzlocal`
-   - `tavily` (for web search)
+   - `tavily-python` (for web search)
    - Standard library stuff like `smtplib` and `imaplib` (usually already included)
 
    You can install them with:
    ```
-   pip install langchain langchain-ollama langgraph dotenv tzlocal tavily
+   pip install langchain langchain-ollama langgraph python-dotenv tzlocal tavily-python
    ```
 
 3. Set up your environment variables. Create a `.env` file in the project root with your email settings:
@@ -49,13 +49,13 @@ You'll need a few things installed first:
    OTS_EMAIL_PASS=your-email-password
    OTS_SMTP_SERVER=smtp.example.com
    OTS_IMAP_SERVER=imap.example.com
-   TAVILY_API_KEY=your-tavily-api-key # Optional, if you want to use web search provided by tavily
+   TAVILY_API_KEY=your-tavily-api-key # Optional, only needed for web search
    OPENAI_API_KEY=your-openai-key  # Optional, if you want to use OpenAI instead
    ```
 
    The email settings depend on your email provider. For Gmail, you'd use `smtp.gmail.com` and `imap.gmail.com`, but you'll need an app-specific password.
 
-4. Make sure Ollama is running and has the model you want to use. The default is `qwen3:8b`, but you can change it in `config/settings.py` if you prefer a different model.
+4. Make sure your model backend is running and has the model you want to use. The default is `gpt-oss:120b-cloud`, but you can change it in `config/settings.py` if you prefer a different model.
 
 ### Running Corque
 
@@ -84,7 +84,7 @@ When Corque wants to send an email, it stops and asks for your approval first. Y
 ## Customization
 
 You can tweak things in `config/settings.py`:
-- Change the model name (default is `qwen3:8b`)
+- Change the model name (default is `gpt-oss:120b-cloud`)
 - Adjust the number of threads
 - Modify other settings
 

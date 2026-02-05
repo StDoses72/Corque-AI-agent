@@ -8,8 +8,10 @@ Corque comes with a bunch of useful tools built right in:
 
 - **Todo List Management**: Add tasks, check what's due, mark things as done, and see your upcoming todos
 - **Email**: Send emails (with your approval first, so nothing goes out without you checking it)
+- **Inbox Check**: Read unread emails from a specific date (defaults to today)
 - **Weather**: Get current weather info for any location
 - **Web Search**: Look things up online when you need real-time information
+- **Daily News**: Pull the latest headlines on a topic
 - **Time Tools**: Handle timezone conversions and date calculations automatically
 
 The best part? You just talk to it naturally. Ask it to "add a todo for tomorrow" or "what's the weather in New York?" and it figures out what to do.
@@ -45,17 +47,17 @@ You'll need a few things installed first:
 3. Set up your environment variables. Create a `.env` file in the project root with your email settings:
 
    ```
-   OTS_EMAIL_USER=your-email@example.com
-   OTS_EMAIL_PASS=your-email-password
-   OTS_SMTP_SERVER=smtp.example.com
-   OTS_IMAP_SERVER=imap.example.com
+   EMAIL_USER=your-email@example.com
+   EMAIL_PASS=your-email-password
+   SMTP_SERVER=smtp.example.com
+   IMAP_SERVER=imap.example.com
    TAVILY_API_KEY=your-tavily-api-key # Optional, only needed for web search
    OPENAI_API_KEY=your-openai-key  # Optional, if you want to use OpenAI instead
    ```
 
    The email settings depend on your email provider. For Gmail, you'd use `smtp.gmail.com` and `imap.gmail.com`, but you'll need an app-specific password.
 
-4. Make sure your model backend is running and has the model you want to use. The default is `gpt-oss:120b-cloud`, but you can change it in `config/settings.py` if you prefer a different model.
+4. Make sure Ollama is running and has the model you want to use. The default is `gpt-oss:120b-cloud`, but you can change it in `config/settings.py` if you prefer a different model.
 
 ### Running Corque
 
@@ -111,8 +113,10 @@ Corque-AI-agent/
 │   ├── todoListTools.py    # Todo list CRUD operations (add, get, delete, change status)
 │   ├── weatherTools.py     # Weather lookup using wttr.in
 │   ├── timeTools.py        # Timezone conversion and date utilities
-│   └── webSearch.py        # Web search using Tavily API
+│   ├── webSearch.py        # Web search using Tavily API
+│   └── newsTools.py        # Daily news search via Tavily
 │
+├── IMAPTesting.py          # Local IMAP test script (manual debugging helper)
 └── data/
     └── CorqueDB.db         # SQLite database for storing todos (auto-created)
 ```
@@ -122,6 +126,7 @@ Corque-AI-agent/
 - `main.py`: This is where everything starts. It initializes the todo database and creates the Agent instance, then runs a simple input loop.
 - `core/agent.py`: The heart of the system. This is where the LangChain agent is set up with all the tools, the system prompt, and the model configuration. It also handles the human-in-the-loop middleware for email approval.
 - `tools/`: Each tool file contains functions decorated with `@tool` from LangChain. These are what the agent can actually do. To add a new capability, create a new tool file here and add it to the tools list in `agent.py`.
+- `IMAPTesting.py`: A quick local script to verify IMAP settings during development.
 - `config/settings.py`: Centralized configuration. All environment variables are loaded here, and you can change defaults like the model name or number of threads.
 
 The tools are imported through `tools/__init__.py`, which makes it easy to add new ones - just add them to the imports there and they'll be available to the agent.
@@ -130,7 +135,7 @@ The tools are imported through `tools/__init__.py`, which makes it easy to add n
 
 - The first time you run it, the database will be created automatically
 - Email sending requires your email credentials in the `.env` file
-- Web search needs a Tavily API key (you can get one at tavily.com)
+- Web search and daily news need a Tavily API key (you can get one at tavily.com)
 - The agent is designed to be direct and helpful - it won't give you extra suggestions unless you ask
 
 ## Troubleshooting

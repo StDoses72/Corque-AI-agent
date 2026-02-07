@@ -184,6 +184,7 @@ The tools are imported through `tools/__init__.py`, which makes it easy to add n
 - Email sending requires your email credentials in the `.env` file
 - Web search and daily news need a Tavily API key (you can get one at tavily.com)
 - The agent is designed to be direct and helpful - it won't give you extra suggestions unless you ask
+- We also maintain a dedicated place for custom plugins; see https://github.com/CactusStd/Corque-Plugin-Platform
 
 ## Troubleshooting
 

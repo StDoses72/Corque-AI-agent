@@ -53,12 +53,22 @@ def sendEmail(recipientEmail,subject,body,fromWho = 'XiangCheng Xu'):
 
 
 @tool
-def getUnReademail(targetDate: str = None):
+def getUnReademail(targetDate: str = None) -> list:
     '''
     Retrieves emails received on a specific date from the inbox.
     Default is today if no date is provided.
     Date format: "YYYY-MM-DD" (e.g., "2026-02-05").
     If the email fails to retrieve, respond with "Sorry, I couldn't find the email at this time."
+    Args:
+        targetDate (str): The date to retrieve emails from. Default is today if no date is provided.
+    Returns:
+        list: A list of emails retrieved from the inbox. Each email is a dictionary with the following keys:
+            - id: The email ID.
+            - subject: The subject of the email.
+            - from: The sender of the email.
+            - to: The recipient of the email.
+            - date: The date of the email.
+            - body: The body of the email.
     '''
     imapOBJ = imaplib.IMAP4_SSL(settings.imapServer)
     imapOBJ.login(settings.emailUser, settings.emailPass)

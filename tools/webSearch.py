@@ -5,7 +5,7 @@ from langchain_core.tools import tool
 
 
 @tool
-def basicWebSearch(query):
+def basicWebSearch(query) -> str:
     '''
     This tool is used to search the web for information.
     It will return the most relevant information from the web.

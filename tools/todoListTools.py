@@ -27,7 +27,7 @@ def getDueDateUTCEpoch(dueDate):
     return convertISOToUTCEpoch(dueDate)
 
 @tool
-def addTodo(title, dueDate, description=None):
+def addTodo(title, dueDate, description=None) -> str:
     '''
     Insert a new pending task into the todo list database.
 
@@ -63,7 +63,7 @@ def addTodo(title, dueDate, description=None):
     return "Task added successfully."
 
 @tool
-def getTodoListinDaysFromNow(days):
+def getTodoListinDaysFromNow(days) -> list:
     '''
     Get the todo list with the due date within the days from now.
     The due date is in UTC time.
@@ -100,7 +100,7 @@ def getTodoListinDaysFromNow(days):
         return localTodoList
 
 @tool
-def getMostRecentTodo(numberOfTodos:int=2):
+def getMostRecentTodo(numberOfTodos:int=2) -> list:
     '''
     Get the most recent todo list.
     The todo list is in the local time.
@@ -131,7 +131,7 @@ def getMostRecentTodo(numberOfTodos:int=2):
         return localTodoList
 
 @tool
-def deleteTodo(todoId):
+def deleteTodo(todoId) -> str:
     '''
     Delete a todo from the todo list. Or mark a todo as completed.
     The todo is deleted from the todo list database.
@@ -154,7 +154,7 @@ def deleteTodo(todoId):
         return 'Todo deletion cancelled.'
 
 @tool
-def changeTodoStatus(todoId, status):
+def changeTodoStatus(todoId, status) -> str:
     '''
     Change the status of a todo.
     The status is changed in the todo list database.

@@ -3,7 +3,7 @@ import time
 from langchain_core.tools import tool
 
 @tool
-def getWeather(location):
+def getWeather(location) -> str:
     '''
     Retrieves the current or the forecasted weather and temperature for a specified location.(获取特定城市的天气)
     If you cannot find the weather for the specified location, respond with "Sorry, I couldn't find the weather for that location.

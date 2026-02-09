@@ -5,13 +5,20 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            padding: 20px;
             font-family: -apple-system, sans-serif;
             height: 100%;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 90px; /* leave room for fixed actions */
+        }
+
         .header {
             font-size: 18px;
             font-weight: 600;
@@ -57,11 +64,14 @@
         }
         
         .actions {
-            margin-top: auto;
+            position: sticky;
+            bottom: 0;
             display: flex;
             gap: 10px;
-            padding-top: 15px;
+            padding: 12px 20px 16px;
             border-top: 1px solid #eee;
+            background: white;
+            z-index: 10;
         }
         
         .btn {
@@ -120,32 +130,33 @@
     </style>
 </head>
 <body>
-    <div class="header">Email</div>
-    
-    <div class="field">
-        <div class="field-label">Subject</div>
-        <div class="field-value" id="subject-display">Meeting Follow-up</div>
-        <input class="field-input" id="subject-input" style="display:none;">
-    </div>
-    
-    <div class="field">
-        <div class="field-label">To</div>
-        <div class="field-value" id="to-display">john@example.com</div>
-        <input class="field-input" id="to-input" style="display:none;">
-    </div>
-    
-    <div class="field">
-        <div class="field-label">Body</div>
-        <div class="field-value body-value" id="body-display">Hi John,
+    <div class="content">
+        <div class="header">Email</div>
+        
+        <div class="field">
+            <div class="field-label">Subject</div>
+            <div class="field-value" id="subject-display">Meeting Follow-up</div>
+            <input class="field-input" id="subject-input" style="display:none;">
+        </div>
+        
+        <div class="field">
+            <div class="field-label">To</div>
+            <div class="field-value" id="to-display">john@example.com</div>
+            <input class="field-input" id="to-input" style="display:none;">
+        </div>
+        
+        <div class="field">
+            <div class="field-label">Body</div>
+            <div class="field-value body-value" id="body-display">Hi John,
 
 Thank you for the productive meeting today. As discussed, I'll send over the project timeline by end of week.
 
 Best regards</div>
-        <textarea class="field-input body" id="body-input" style="display:none;"></textarea>
+            <textarea class="field-input body" id="body-input" style="display:none;"></textarea>
+        </div>
     </div>
     
     <div class="actions" id="view-actions">
-        <button class="btn" onclick="cancel()">Close</button>
         <button class="btn" onclick="reject()">Reject</button>
         <button class="btn" onclick="edit()">Edit</button>
         <button class="btn primary" onclick="send()">Send</button>

@@ -2,3 +2,5 @@
 data/
 node_modules/
 corque-ui/node_modules/
+workspace/*
+!workspace/.gitkeep

@@ -5,7 +5,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: rgba(0, 0, 0, 0.01); /* keep transparent but clickable */
+            background: rgba(0, 0, 0, 0); /* fully transparent */
             overflow: hidden;
             font-family: sans-serif;
         }
@@ -32,7 +32,24 @@
         #container {
             width: 100vw; height: 100vh;
             position: relative;
-            background: rgba(0, 0, 0, 0.01); /* keep transparent but clickable */
+            background: rgba(0, 0, 0, 0); /* fully transparent */
+            pointer-events: auto;
+        }
+
+        /* Click-through mode when expanded */
+        #container.pass-through {
+            pointer-events: none;
+        }
+
+        #container.pass-through #cactus-core,
+        #container.pass-through #bubble-container,
+        #container.pass-through #input-section,
+        #container.pass-through #action-bar,
+        #container.pass-through #tool-btn,
+        #container.pass-through #tool-panel,
+        #container.pass-through #email-panel,
+        #container.pass-through #settings-panel,
+        #container.pass-through #history-panel {
             pointer-events: auto;
         }
 
@@ -136,6 +153,18 @@
             right:45px;  /* 设置按钮 */
         }
 
+        .exit-btn {
+            position: fixed;
+            right: 15px;
+            bottom: 0px;
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 16px;
+            border: none;
+        }
+
 
         .action-shortcut {
             flex-shrink: 0;
@@ -164,7 +193,7 @@
         }
 
         /* 内部小零件 */
-        #chat-select { font-size: 14px; color: #666; cursor: pointer; }
+        #chat-select { font-size: 14px; color: #666; cursor: pointer; display: none; }
         #send-btn { 
             width: 28px; 
             height: 28px; 
@@ -231,13 +260,13 @@
             border-radius: 12px 12px 0 0;
             overflow: hidden;
             transition: height 0.3s;
-            z-index: 0;
+            z-index: 200;
         }
 
         #tool-panel.open {
             height: 600px;
             width: 670px;
-            z-index: 0;
+            z-index: 200;
             border: 2px solid #a8a69e;  /* 打开时才显示边框 */
         }
 
@@ -270,94 +299,66 @@
         }
 
         #bubble-container {
-            left: 50px;
+            left: 20px;
             bottom: 130px;  /* 仙人掌上方 */
             position: absolute;
+            width: 700px;
+            height: 220px; /* 显示约 2~3 条消息 */
+            max-height: 220px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px 14px;
+            background: white;
+            border: 2px solid #000000;
+            border-radius: 10px;
+            z-index: 80;
         }
 
-        .bubble {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            max-width: 700px;
-            min-height: 30px;
-            padding: 10px 14px;
-            position: relative;
-            margin-top: -100px;
-            margin-left: 0px;
+        #bubble-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-message {
+            max-width: 100%;
+            padding: 6px 0;
             z-index: 100;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            line-height: 1.4;
+            display: block;
+            height: auto;
         }
 
-        /* 单行 = 胶囊形 */
-        .bubble.single-line {
-            border-radius: 20px;
-            padding-right: 50px; /* 留圆形位置 */
-            background: white;
-            border: 2px solid #000000;
+        .message-text {
+            white-space: pre-wrap;
+            font-family: inherit;
+            tab-size: 4;
+            margin: 0;
+            display: block;
+            max-width: 100%;
         }
 
-        /* 多行 = 圆角矩形 */
-        .bubble.multi-line {
-            border-radius: 12px;
-            background: white;
-            border: 2px solid #000000;
+        .chat-message.user {
+            align-self: flex-end;
+            margin-left: auto;
+            color: #1a4fb8;
         }
 
-        .bubble-tail {
-            position: fixed;
-            left: 60px;
-            bottom: 120px;
-            width: 0;
-            height: 0;
-            z-index: 110;
-            border-left: 20px solid #ffffff;
-            border-bottom: 20px solid transparent;
+        .chat-message.assistant {
+            align-self: flex-start;
+            margin-right: auto;
+            color: #111111;
         }
 
         #container.show #bubble-container {
-            display: block;
-        }
-
-
-        /* 右侧圆形按钮 */
-        .bubble-action {
-            position: absolute;
-            bottom: 0px;
-            width: 36px;
-            height: 36px;
-            background: white;
-            border: 2px solid #FFD700;
-            border-radius: 50%;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 20px;
-            z-index: 100;
         }
 
-        /* Y/N 按钮容器 */
-        .bubble-buttons {
-            position: fixed;
-            bottom: 105px;  /* 固定 Y */
-            display: flex;
-            gap: 8px;
-            z-index: 100;
-        }
 
-        .bubble-btn {
-            width: 30px;
-            height: 15px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        .bubble-btn.yes { background: #d4edda; }
-        .bubble-btn.no { background: #f8d7da; margin-left: 0;}
+        /* bubble action/confirm removed for chat list */
 
 
         #history-panel {
@@ -370,7 +371,7 @@
             background: white;
             border: none;
             border-radius: 12px 12px 0 0;
-            z-index: 50;
+            z-index: 300;
             overflow: hidden;
             transition: height 0.3s;
         }
@@ -419,7 +420,7 @@
             background: white;
             border: none;
             border-radius: 12px 12px 0 0;
-            z-index: 50;
+            z-index: 300;
             overflow: hidden;
             transition: height 0.3s;
         }
@@ -444,7 +445,7 @@
             background: white;
             border: none;
             border-radius: 12px 12px 0 0;
-            z-index: 50;
+            z-index: 300;
             overflow: hidden;
             transition: height 0.3s;
         }
@@ -458,6 +459,14 @@
             width: 100%;
             height: 100%;
             border: none;
+        }
+
+        /* 打开邮件面板时隐藏聊天区，避免遮挡和错位 */
+        #container.email-open #bubble-container,
+        #container.email-open #input-section,
+        #container.email-open #action-bar,
+        #container.email-open #tool-btn {
+            display: none !important;
         }
 
     
@@ -474,7 +483,7 @@
         <div id="input-section">
             <textarea id="inp" placeholder="What do you want to ask today?..."></textarea>
             <div class="bottom-controls">
-                <div id="chat-select">New Chat ⌄</div>
+                <!-- chat select disabled -->
                 <button id="send-btn">↑</button>
             </div>
             <div id="chat-dropdown">
@@ -505,8 +514,9 @@
         </div>
 
         <div id="action-bar">
-            <button class="history-btn">🕐</button>
+            <!-- history disabled -->
             <button class="settings-btn">⚙️</button>
+            <button class="exit-btn">⏻</button>
         </div>
     </div>
 
@@ -514,6 +524,10 @@
     const { ipcRenderer } = require('electron');
     const API_BASE = 'http://127.0.0.1:8000/api';
     let currentChatId = null;
+    let currentMessages = [];
+    let allowAutoScroll = true;
+    let isExpandedState = false;
+    let lastPassThrough = null;
 
 
     function testEmail() {
@@ -524,6 +538,21 @@
         } else {
             console.error('找不到 email-panel 元素，请检查 HTML 里的 id 是否正确');
         }
+    }
+
+    function setPassThrough(enabled) {
+            ipcRenderer.send('set-pass-through', enabled);
+        if (enabled) {
+            container.classList.add('pass-through');
+        } else {
+            container.classList.remove('pass-through');
+        }
+    }
+
+    function setPassThroughIfNeeded(enabled) {
+        if (lastPassThrough === enabled) return;
+        lastPassThrough = enabled;
+        setPassThrough(enabled);
     }
 
     async function waitForBackend(retries = 20, delayMs = 300) {
@@ -546,6 +575,17 @@
         const sendBtn = document.getElementById('send-btn');
         const chatSelect = document.getElementById('chat-select');
         const textarea = document.getElementById('inp');
+        const interactiveSelectors = [
+            '#cactus-core',
+            '#bubble-container',
+            '#input-section',
+            '#action-bar',
+            '#tool-btn',
+            '#tool-panel',
+            '#email-panel',
+            '#settings-panel',
+            '#history-panel'
+        ].join(',');
 
         // 【调试日志】如果控制台看到报错，请看这几行打印出的是什么
         console.log('检查元素状态:', {
@@ -572,7 +612,7 @@
 
         const backendReady = await waitForBackend();
         if (!backendReady) {
-            showBubble('Backend not ready. Please restart app.');
+            addMessage('assistant', 'Backend not ready. Please restart app.');
         } else {
             loadChatList();
         }
@@ -591,7 +631,7 @@
 
             try {
                 if (!(await waitForBackend(5, 200))) {
-                    showBubble('Backend still starting. Try again.');
+                    addMessage('assistant', 'Backend still starting. Try again.');
                     return;
                 }
                 const response = await fetch(`${API_BASE}/chat`, {
@@ -610,13 +650,12 @@
                     throw new Error(data.detail || 'Request failed');
                 }
                 currentChatId = data.chatId;
-                document.getElementById('bubble-container').innerHTML = '';
-                showBubble(data.reply || 'No response.');
+                addMessage('user', text);
+                addMessage('assistant', data.reply || 'No response.');
                 await maybeOpenEmailPanel(data.pendingAction);
                 loadChatList();
             } catch (err) {
-                document.getElementById('bubble-container').innerHTML = '';
-                showBubble(`Backend error: ${err.message || 'Please check the server.'}`);
+                addMessage('assistant', `Backend error: ${err.message || 'Please check the server.'}`);
                 console.error(err);
             }
         }
@@ -626,69 +665,30 @@
             ipcRenderer.send('toggle');
         }
 
-        function showBubble(text, options = {}) {
+        function renderMessages(messages) {
             const container = document.getElementById('bubble-container');
-            const bubble = document.createElement('div');
-            bubble.className = 'bubble';
-            
-            // 判断单行/多行
-            const isSingleLine = text.length < 40; // 或用其他方式判断
-            bubble.classList.add(isSingleLine ? 'single-line' : 'multi-line');
-            
-            const textSpan = document.createElement('span');
-            textSpan.textContent = text;
-            bubble.appendChild(textSpan);
+            const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 20;
+            container.innerHTML = '';
+            messages.forEach((msg) => {
+                const bubble = document.createElement('div');
+                bubble.className = `chat-message ${msg.role}`;
+                const text = document.createElement('pre');
+                text.className = 'message-text';
+                text.textContent = msg.content;
+                bubble.appendChild(text);
+                container.appendChild(bubble);
+            });
+            container.style.display = 'flex';
+            requestAnimationFrame(() => {
+                if (allowAutoScroll || nearBottom) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            });
+        }
 
-            const tail = document.createElement('div');
-            tail.className = 'bubble-tail';
-            container.appendChild(tail);
-            
-            // 右侧圆形按钮（如挥手）
-            if (options.action) {
-                const actionBtn = document.createElement('div');
-                actionBtn.className = 'bubble-action';
-                actionBtn.textContent = options.action.emoji;
-                actionBtn.onclick = options.action.onClick;
-                
-                container.appendChild(actionBtn);
-                
-                // 气泡渲染后计算位置
-                setTimeout(() => {
-                    const bubbleRect = bubble.getBoundingClientRect();
-                    const containerRect = container.getBoundingClientRect();
-                    actionBtn.style.left = (bubbleRect.right - containerRect.left + 10) + 'px';
-                }, 0);
-            }
-            
-            // Y/N 按钮
-            if (options.needConfirm) {
-                const btnContainer = document.createElement('div');
-                btnContainer.className = 'bubble-buttons';
-                
-                const yesBtn = document.createElement('div');
-                yesBtn.className = 'bubble-btn yes';
-                yesBtn.textContent = '✓';
-                yesBtn.onclick = () => options.onConfirm(true);
-                
-                const noBtn = document.createElement('div');
-                noBtn.className = 'bubble-btn no';
-                noBtn.textContent = '✗';
-                noBtn.onclick = () => options.onConfirm(false);
-                
-                btnContainer.appendChild(yesBtn);
-                btnContainer.appendChild(noBtn);
-                container.appendChild(btnContainer);
-                
-                // 计算 X 位置
-                setTimeout(() => {
-                    const bubbleRect = bubble.getBoundingClientRect();
-                    const containerRect = container.getBoundingClientRect();
-                    btnContainer.style.left = (bubbleRect.left - containerRect.left + 100) + 'px';
-                }, 0);
-            }
-            
-            container.appendChild(bubble);
-            container.style.display = 'block';
+        function addMessage(role, content) {
+            currentMessages.push({ role, content });
+            renderMessages(currentMessages);
         }
 
         // // 使用示例
@@ -725,6 +725,9 @@
         if (toolBtn) {
             toolBtn.onclick = () => {
                 toolPanel.classList.add('open');
+                toolPanel.style.zIndex = '400';
+                document.getElementById('settings-panel').style.zIndex = '300';
+                document.getElementById('email-panel').style.zIndex = '300';
                 toolBtn.style.display = 'none';
             };
         }
@@ -740,16 +743,22 @@
         window.addEventListener('message', (e) => {
             if (e.data.action === 'closeEmail') {
                 document.getElementById('email-panel').classList.remove('open');
+                container.classList.remove('email-open');
+                setPassThroughIfNeeded(true);
             } else if (e.data.action === 'sendEmail') {
                 console.log('Email sent:', e.data.data);
                 document.getElementById('email-panel').classList.remove('open');
+                container.classList.remove('email-open');
+                setPassThroughIfNeeded(true);
             }else if (e.data.action === 'closeSettings') {
                 document.getElementById('settings-panel').classList.remove('open');
+                setPassThroughIfNeeded(true);
             } else if (e.data.action === 'emailResolved') {
                 document.getElementById('email-panel').classList.remove('open');
+                container.classList.remove('email-open');
+                setPassThroughIfNeeded(true);
                 if (e.data.reply) {
-                    document.getElementById('bubble-container').innerHTML = '';
-                    showBubble(e.data.reply);
+                    addMessage('assistant', e.data.reply);
                 }
             } else if (e.data.action === 'openChat') {
                 selectChat(e.data.chatId);
@@ -779,6 +788,20 @@
         }
 
         // --- 3. 绑定事件 (使用安全检查) ---
+        const bubbleContainer = document.getElementById('bubble-container');
+        if (bubbleContainer) {
+            bubbleContainer.addEventListener('scroll', () => {
+                const distance = bubbleContainer.scrollHeight - bubbleContainer.scrollTop - bubbleContainer.clientHeight;
+                allowAutoScroll = distance < 20;
+            });
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isExpandedState) return;
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            const interactive = el && el.closest(interactiveSelectors);
+            setPassThroughIfNeeded(!interactive);
+        });
 
         // 发送按钮
         if (sendBtn) {
@@ -836,49 +859,55 @@
             }
         };
 
+        let pendingDrag = null;
+        let dragRafId = null;
+
+        function flushDrag() {
+            dragRafId = null;
+            if (!pendingDrag) return;
+            ipcRenderer.send('drag-move', pendingDrag);
+            pendingDrag = null;
+        }
+
         document.onmousemove = (e) => {
             if (!dragCandidate && !isDragging) return;
             const deltaX = e.screenX - dragStartX;
             const deltaY = e.screenY - dragStartY;
             if (!isDragging) {
-                if (Math.abs(deltaX) + Math.abs(deltaY) < 3) return;
+                if (Math.abs(deltaX) + Math.abs(deltaY) < 1) return;
                 isDragging = true;
             }
-            ipcRenderer.send('drag-move', { screenX: e.screenX, screenY: e.screenY });
+            pendingDrag = { screenX: e.screenX, screenY: e.screenY };
+            if (!dragRafId) {
+                dragRafId = requestAnimationFrame(flushDrag);
+            }
         };
 
         document.onmouseup = () => {
             isDragging = false;
             dragCandidate = false;
             ipcRenderer.send('drag-end');
+            pendingDrag = null;
         };
         
         document.onmouseleave = () => {
             isDragging = false;
             dragCandidate = false;
             ipcRenderer.send('drag-end');
+            pendingDrag = null;
         };
 
          //   ----- history---------
 
-         document.querySelector('.history-btn').onclick = () => {
-            document.getElementById('history-panel').classList.add('open');
-            reloadHistoryPanel();
-        };
-
-        document.getElementById('close-history').onclick = () => {
-            document.getElementById('history-panel').classList.remove('open');
-        };
+        if (document.querySelector('.history-btn')) {
+            document.querySelector('.history-btn').onclick = null;
+        }
 
 
         const chatDropdown = document.getElementById('chat-dropdown');
 
         if (chatSelect) {
-            chatSelect.onclick = (e) => {
-                e.stopPropagation();
-                chatDropdown.classList.toggle('show');
-                loadChatList();
-            };
+            chatSelect.onclick = null;
         }
 
         document.addEventListener('click', () => {
@@ -898,18 +927,16 @@
             chatDropdown.classList.remove('show');
             if (id === 'new') {
                 currentChatId = null;
-                document.getElementById('bubble-container').innerHTML = '';
+                currentMessages = [];
+                renderMessages(currentMessages);
                 return;
             }
             currentChatId = id;
             try {
                 const response = await fetch(`${API_BASE}/chat/${id}`);
                 const data = await response.json();
-                const lastAssistant = [...data.messages].reverse().find(m => m.role === 'assistant');
-                document.getElementById('bubble-container').innerHTML = '';
-                if (lastAssistant) {
-                    showBubble(lastAssistant.content);
-                }
+                currentMessages = data.messages || [];
+                renderMessages(currentMessages);
                 await maybeOpenEmailPanel();
             } catch (err) {
                 console.error(err);
@@ -920,6 +947,13 @@
 
         document.querySelector('.settings-btn').onclick = () => {
             document.getElementById('settings-panel').classList.add('open');
+            document.getElementById('settings-panel').style.zIndex = '400';
+            document.getElementById('tool-panel').style.zIndex = '300';
+            document.getElementById('email-panel').style.zIndex = '300';
+        };
+
+        document.querySelector('.exit-btn').onclick = () => {
+            ipcRenderer.send('app-quit');
         };
 
 
@@ -945,6 +979,11 @@
                 const frame = panel.querySelector('iframe');
                 const payload = { action: 'loadEmail', chatId: currentChatId, pendingAction: action };
                 panel.classList.add('open');
+                container.classList.add('email-open');
+                panel.style.zIndex = '400';
+                document.getElementById('settings-panel').style.zIndex = '300';
+                document.getElementById('tool-panel').style.zIndex = '300';
+                setPassThroughIfNeeded(false);
                 if (frame.contentWindow) {
                     frame.contentWindow.postMessage(payload, '*');
                 } else {
@@ -959,23 +998,24 @@
             ipcRenderer.send('drag-end');
             if (exp) {
                 container.classList.add('show');
+                isExpandedState = true;
+                setPassThroughIfNeeded(true);
                 const input = document.getElementById('inp');
                 if(input) setTimeout(() => input.focus(), 150);
                 setTimeout(() => {
-                    const hour = new Date().getHours();
-                    const greeting = hour < 12 ? 'Good morning!' : hour < 18 ? 'Good afternoon!' : 'Good evening!';
-                    showBubble(greeting, {
-                        action: {
-                            emoji: '👋',
-                            onClick: () => {
-                                document.getElementById('bubble-container').innerHTML = '';
-                            }
-                        }
-                    });
+                    if (currentMessages.length === 0) {
+                        const hour = new Date().getHours();
+                        const greeting = hour < 12 ? 'Good morning!' : hour < 18 ? 'Good afternoon!' : 'Good evening!';
+                        addMessage('assistant', greeting);
+                    }
                 }, 300);
             } else {
                 container.classList.remove('show');
-                document.getElementById('bubble-container').innerHTML = '';
+                isExpandedState = false;
+                setPassThroughIfNeeded(false);
+                container.classList.remove('email-open');
+                currentMessages = [];
+                renderMessages(currentMessages);
                 const toolPanel = document.getElementById('tool-panel');
                 const toolBtn = document.getElementById('tool-btn');
                 if (toolPanel) toolPanel.classList.remove('open');

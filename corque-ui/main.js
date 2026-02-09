@@ -61,6 +61,7 @@ function createWindow() {
     
     console.log('✅ 窗口创建成功');
     applyWindowSize(false);
+    win.setAlwaysOnTop(true);
 
     // Hard lock window size in case of any external resize.
     win.on('will-resize', (e) => {
@@ -91,8 +92,25 @@ function applyWindowSize(expanded, position) {
 
 ipcMain.on('toggle', () => {
     isExpanded = !isExpanded;
+    // Only keep top-most when collapsed as icon
+    win.setAlwaysOnTop(!isExpanded);
+    if (isExpanded) {
+        win.setIgnoreMouseEvents(true, { forward: true });
+    } else {
+        win.setIgnoreMouseEvents(false);
+    }
     applyWindowSize(isExpanded);
     win.webContents.send('state', isExpanded);
+});
+
+ipcMain.on('set-pass-through', (event, enabled) => {
+    if (isExpanded) {
+        win.setIgnoreMouseEvents(!!enabled, { forward: true });
+    }
+});
+
+ipcMain.on('app-quit', () => {
+    app.quit();
 });
 
 // 移动窗口
@@ -103,13 +121,7 @@ ipcMain.on('drag-start', (event, { screenX, screenY }) => {
 
 ipcMain.on('drag-move', (event, { screenX, screenY }) => {
     if (!dragOffset) return;
-    const target = isExpanded ? EXPANDED_SIZE : COLLAPSED_SIZE;
-    win.setBounds({
-        x: screenX - dragOffset.x,
-        y: screenY - dragOffset.y,
-        width: target.width,
-        height: target.height
-    }, false);
+    win.setPosition(screenX - dragOffset.x, screenY - dragOffset.y, false);
 });
 
 ipcMain.on('drag-end', () => {

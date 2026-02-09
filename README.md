@@ -36,21 +36,33 @@ You'll need a few things installed first:
 2. Install the required Python packages. You'll need:
    - `langchain`
    - `langchain-ollama`
+   - `langchain-openai`
    - `langgraph`
    - `python-dotenv`
    - `tzlocal`
    - `tavily-python` (for web search)
+   - `requests` (used by the weather tool)
    - `fastapi`, `uvicorn`, `pydantic` (for the API server/UI backend)
    - Standard library stuff like `smtplib` and `imaplib` (usually already included)
 
    You can install them with:
    ```
-   pip install langchain langchain-ollama langgraph python-dotenv tzlocal tavily-python
+   pip install langchain langchain-ollama langchain-openai langgraph python-dotenv tzlocal tavily-python requests
    ```
    Or use the provided requirements file for the API server:
    ```
    pip install -r requirements.txt
    ```
+   For a full install (agent + tools + API + UI backend):
+   ```
+   pip install -r requirements-full.txt
+   ```
+   Or just run the one-click installer on Windows:
+   ```
+   dependencysetup.bat
+   ```
+   It will install Python, Node.js (npm), and Ollama via `winget` if missing.
+   If it installs a runtime, close and re-open the terminal before re-running it.
 
 3. Set up your environment variables. Create a `.env` file in the project root with your email settings:
 
@@ -59,8 +71,11 @@ You'll need a few things installed first:
    EMAIL_PASS=your-email-password
    SMTP_SERVER=smtp.example.com
    IMAP_SERVER=imap.example.com
+   SENDER_NAME=Your Name            # Optional, email signature name
+   USER_NAME=Your Name              # Optional, fallback sender name
+   REGION=your-region               # Optional, used by the UI settings
    TAVILY_API_KEY=your-tavily-api-key # Optional, only needed for web search
-   OPENAI_API_KEY=your-openai-key  # Optional, if you want to use OpenAI instead
+   DEDALUS_API_KEY=your-dedalus-key  # Required for the default model
    ```
 
    The email settings depend on your email provider. For Gmail, you'd use `smtp.gmail.com` and `imap.gmail.com`, but you'll need an app-specific password.
@@ -85,6 +100,8 @@ To launch the Electron UI on Windows, use:
 ```
 start.bat
 ```
+Run `npm install` inside `corque-ui/` the first time to install Electron dependencies.
+Note: `corque-ui/main.js` currently starts the backend using `py -3.13`. If your Python version is different, update that command or ensure Python 3.13 is installed.
 
 ## How It Works
 
@@ -120,8 +137,18 @@ Corque-AI-agent/
 ├── main.py                 # Entry point - starts the agent and handles the chat loop
 ├── run.bat                 # Windows batch file to launch Corque easily
 ├── start.bat               # Windows batch file to launch the Electron UI
+├── dependencysetup.bat     # One-click dependency installer (Python + Node)
 ├── requirements.txt        # Python deps for the API server
+├── requirements-full.txt   # Full dependency list for agent + tools + API + UI backend
 ├── LICENSE                 # Project license
+├── IMAPTesting.py          # Local IMAP test script (manual debugging helper)
+│
+├── data/
+│   └── CorqueDB.db         # SQLite database for storing todos + chat history
+│
+├── workspace/              # Generated code files live here (safe execution sandbox)
+│   ├── calculator.py
+│   └── web_spider.py
 │
 ├── core/
 │   ├── agent.py            # The main Agent class - sets up the LLM, tools, and handles requests
@@ -140,11 +167,12 @@ Corque-AI-agent/
 │   ├── weatherTools.py     # Weather lookup using wttr.in
 │   ├── timeTools.py        # Timezone conversion and date utilities
 │   ├── webSearch.py        # Web search using Tavily API
-│   └── newsTools.py        # Daily news search via Tavily
+│   ├── newsTools.py        # Daily news search via Tavily
 │   ├── loadskillTools.py   # Loads a full skill into context on demand
 │   └── codeGenTools.py     # Code generation and workspace-safe execution
 │
 ├── skills/                 # Markdown skills that can be loaded at runtime
+│   ├── Cat_persona.md
 │   ├── coding_agent.md
 │   ├── skillArchitect.md
 │   └── toolArchitect.md
@@ -153,14 +181,13 @@ Corque-AI-agent/
 │   ├── main.js             # Electron main process (starts API server)
 │   ├── index.html          # Main UI shell
 │   ├── history.html        # Chat history view
+│   ├── email.html          # Email approval view
 │   ├── settings.html       # Settings view
 │   ├── tools.html          # Tools/skills marketplace view
-│   └── tools-data.json     # Sample tool/skill metadata
-│
-├── IMAPTesting.py          # Local IMAP test script (manual debugging helper)
-└── data/
-    └── CorqueDB.db         # SQLite database for storing todos (auto-created)
-└── workspace/              # Generated code files live here (safe execution sandbox)
+│   ├── tools-data.json     # Sample tool/skill metadata
+│   ├── cactus.png          # UI icon asset
+│   ├── package.json        # Electron app manifest
+│   └── package-lock.json
 ```
 
 **Key files to know:**
@@ -172,7 +199,7 @@ Corque-AI-agent/
 - `middleware/skill_middleware.py`: Appends the skill list to the system prompt and enables `load_skill`.
 - `tools/`: Each tool file contains functions decorated with `@tool` from LangChain. These are what the agent can actually do. To add a new capability, create a new tool file here and add it to the tools list in `agent.py`.
 - `tools/codeGenTools.py`: Generates code into `workspace/` and optionally runs it in a sandboxed way.
-- `corque-ui/`: Electron desktop UI that talks to the API server.
+- `corque-ui/`: Electron desktop UI that talks to the API server (and spawns it on launch).
 - `IMAPTesting.py`: A quick local script to verify IMAP settings during development.
 - `config/settings.py`: Centralized configuration. All environment variables are loaded here, and you can change defaults like the model name or number of threads.
 
@@ -191,6 +218,7 @@ The tools are imported through `tools/__init__.py`, which makes it easy to add n
 If something's not working:
 - Make sure Ollama is running and the model is downloaded
 - Check that your `.env` file has all the required variables
+- Ensure `DEDALUS_API_KEY` is set if you use the default model configuration
 - Verify your email settings are correct (especially if using Gmail, you'll need an app password)
 - Make sure all Python packages are installed
 - Make sure that your CUDA toolkit and your GPU driver is correctly deployed

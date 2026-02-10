@@ -147,8 +147,8 @@ Corque-AI-agent/
 │   └── CorqueDB.db         # SQLite database for storing todos + chat history
 │
 ├── workspace/              # Generated code files live here (safe execution sandbox)
-│   ├── calculator.py
-│   └── web_spider.py
+│
+｜
 │
 ├── core/
 │   ├── agent.py            # The main Agent class - sets up the LLM, tools, and handles requests

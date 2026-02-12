@@ -2,7 +2,7 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from config.settings import settings
-from tools import getWeather, sendEmail, getUnReademail, addTodo, getUTCNow, getTodoListinDaysFromNow, convertUTCEpochToISO, convertUTCToLocal, deleteTodo, getMostRecentTodo, changeTodoStatus, basicWebSearch, dailyNewsSearch, load_skill, generateCode, runCode
+from tools import getWeather, sendEmail, getUnReademail, addTodo, getUTCNow, getTodoListinDaysFromNow, convertUTCEpochToISO, convertUTCToLocal, deleteTodo, getMostRecentTodo, changeTodoStatus, basicWebSearch, dailyNewsSearch, load_skill, generateCode, runCode, readFile, writeFile, runShellCommand, systemInfo
 from langchain.agents.middleware import HumanInTheLoopMiddleware,LLMToolSelectorMiddleware
 from langgraph.types import Command
 from langchain_openai import ChatOpenAI
@@ -11,41 +11,89 @@ import time
 
 class Agent:
     def __init__(self):
-        self.systemPrompt = ''' 
-        You are a sophisticated AI assistant named Corque.
+        self.systemPrompt = '''
+        You are Corque, an autonomous intelligent agent operating on a local machine.
 
-        Your role is to help users complete their requests accurately and efficiently.
-        You may use tools when they are necessary to complete the task.
+        # YOUR SITUATION
+        - You have FULL SHELL ACCESS to this environment via `run_shell_command`.
+        - You do NOT know where files are located initially.
+        - You must DISCOVER your environment to find your memory and tools.
 
-        When tools are used:
-        - Use them silently.
-        - Do not show tool names, function calls, parameters, or intermediate results to the user.
-        - Only present the final outcome that the user cares about.
+        # PROTOCOL FOR THE UNKNOWN
+        1. **ORIENT**: If you don't know where something is, use shell commands (like `ls`, `dir`, `find`, `grep`) to look for it.
+        2. **VERIFY**: Before assuming a file exists, check it.
+        3. **EXECUTE**: Once you find the path, proceed with your task.
 
-        When responding to the user:
-        - Focus strictly on the user's request.
-        - Provide the final result directly.
-        - Do not add extra suggestions, follow-up questions, or unrelated information unless the user explicitly asks.
-        - Do not explain your reasoning or internal process.
+        # CRITICAL RULE
+        - You have the power to execute system commands. USE IT WISELY.
+        - If a task requires information you don't have, DO NOT ASK THE USER. **FIND IT YOURSELF.**
 
-        If the task is completed, tell the user the if the task is successful or not, and the result of the task.
+        # MEMORY FILE
 
-        If required information is missing, ask one concise clarification question.
-        If you are unsure about factual information, say clearly: "I am not sure about the information."
-        Do not invent or assume facts.
+        Once you think something can be useful for your future tasks, write it to a file called "memory.md" in your current working directory, not any other place.
+        The format of the memory file should be:
+        - The date and time of the memory
+        - The memory content
+        - The source of the memory
+        - The context of the memory
+        - The relevance of the memory to your current task
+        - The action you took based on the memory
+        - The result of the action
 
-        For writing tasks (such as letters, messages, or emails):
-        - Output only the requested content itself.
-        - Do not include advice, analysis, or next-step suggestions unless explicitly requested.
+        Your memory file should be updated regularly, not just when you think something is useful.
+        You can read the memory file anytime you want to get the information you need.
 
-        When writing emails or messages that will be sent using tools:
-        - Do not include a signature, closing, or sender name. The system will add it automatically.
-
-        When multiple tools could be used:
-        - You may use them in parallel if appropriate.
-        - Ensure the final response is clean, natural, and user-facing only.
-        Once you deliver the requested output, stop. Do not continue with extra suggestions unless asked.
+        # TOOLS
+        1. **PARALLEL EXECUTION (Efficiency)**:
+           - If tasks are independent (e.g., "get weather" AND "send email"), you MUST call them simultaneously.
+        
+        2. **SEQUENTIAL CHAINING (Deep Work)**:
+           - If task B depends on task A (e.g., "Find a file" -> "Read it"), you must execute them in steps.
+           - **CRITICAL RULE**: When you receive the output of an intermediate step (like `ls` or `grep`), **DO NOT STOP** to report it to the user.
+           - **SILENT CONTINUATION**: Immediately analyze the tool output and call the NEXT tool.
+           - **Example**: 
+             * User: "Fix the bug in main.py"
+             * You: Call `read_file('main.py')` -> (Receive Code) -> Call `write_file('main.py', fixed_code)` -> (Receive Success) -> Final Answer: "Fixed."
+        
+        3. **RESILIENCE**:
+           - If a tool fails (e.g., "File not found"), **DO NOT GIVE UP** or ask the user what to do.
+           - **SELF-CORRECT**: Immediately try a different approach (e.g., search parent directory, use `find` command) within the same execution loop.
         '''
+        # self.systemPrompt = ''' 
+        # You are a sophisticated AI assistant named Corque.
+
+        # Your role is to help users complete their requests accurately and efficiently.
+        # You may use tools when they are necessary to complete the task.
+
+        # When tools are used:
+        # - Use them silently.
+        # - Do not show tool names, function calls, parameters, or intermediate results to the user.
+        # - Only present the final outcome that the user cares about.
+
+        # When responding to the user:
+        # - Focus strictly on the user's request.
+        # - Provide the final result directly.
+        # - Do not add extra suggestions, follow-up questions, or unrelated information unless the user explicitly asks.
+        # - Do not explain your reasoning or internal process.
+
+        # If the task is completed, tell the user the if the task is successful or not, and the result of the task.
+
+        # If required information is missing, ask one concise clarification question.
+        # If you are unsure about factual information, say clearly: "I am not sure about the information."
+        # Do not invent or assume facts.
+
+        # For writing tasks (such as letters, messages, or emails):
+        # - Output only the requested content itself.
+        # - Do not include advice, analysis, or next-step suggestions unless explicitly requested.
+
+        # When writing emails or messages that will be sent using tools:
+        # - Do not include a signature, closing, or sender name. The system will add it automatically.
+
+        # When multiple tools could be used:
+        # - You may use them in parallel if appropriate.
+        # - Ensure the final response is clean, natural, and user-facing only.
+        # Once you deliver the requested output, stop. Do not continue with extra suggestions unless asked.
+        # '''
         self.toolModelSystemPrompt = '''
         You are a tool selector for an AI agent.
 
@@ -89,7 +137,11 @@ class Agent:
             dailyNewsSearch,
             generateCode,
             load_skill,
-            runCode
+            runCode,
+            readFile,
+            writeFile,
+            runShellCommand,
+            systemInfo
         ]
         self.model = ChatOllama(
             model=settings.modelName,
@@ -104,9 +156,15 @@ class Agent:
         #     api_key=settings.apiKey,
         #     base_url="https://api.dedaluslabs.ai/v1"
         # )
+        self.sensitiveTools = {
+            "sendEmail": True,
+            "writeFile": True,
+            "runShellCommand": True,
+            "runCode": True
+        }
         self.agent = create_agent(self.model, tools=self.tools, checkpointer=InMemorySaver(), system_prompt=self.systemPrompt,
         middleware = [HumanInTheLoopMiddleware(
-            interrupt_on={'sendEmail':True},
+            interrupt_on=self.sensitiveTools,
             description_prefix="Tool execution pending approval"
         ),
                     skillMiddleware(),
@@ -119,7 +177,7 @@ class Agent:
         response = self.agent.invoke({'messages':[{'role':'user','content':query}]},config=config)
         endTime = time.time()
         print(f"Time taken: {endTime - startTime} seconds")
-        if '__interrupt__' in response:
+        while '__interrupt__' in response:
             if not interactive:
                 interrupt = response['__interrupt__'][0]
                 value = interrupt.value
@@ -148,7 +206,8 @@ class Agent:
                 decision = input('Decision: approve, edit, or reject? (a/e/r): ')
                 if decision == 'a':
                     result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'approve'}]}),config=config)
-                    return result2["messages"][-1].content
+                    response = result2
+                    continue
                 elif decision == 'e':
                     newRecipientEmail = value['action_requests'][0]['args']['recipientEmail']
                     newSubject = value['action_requests'][0]['args']['subject']
@@ -209,11 +268,73 @@ class Agent:
                     ),
                     config=config  # Same thread ID to resume the paused conversation
                 )
-                    return result2["messages"][-1].content
+                    response = result2
+                    continue
                 elif decision == 'r':
                     result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'reject'}]}),config=config)
                     print('The attempt to send the email is rejected.'+'\n')
-                    return result2["messages"][-1].content
+                    response = result2
+                    break
+            elif toolName == 'writeFile':
+                print('The agent is trying to write a file, please review the file content and decide if it is correct.'+'\n')
+                print('The file path is:')
+                print(value['action_requests'][0]['args']['filePath']+'\n')
+                print('The file content is:')
+                print(value['action_requests'][0]['args']['content']+'\n')
+                decision = input('Decision: approve or reject? (a/r): ')
+                if decision == 'a':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'approve'}]}),config=config)
+                    response = result2
+                    continue
+                elif decision == 'r':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'reject'}]}),config=config)
+                    print('The attempt to write the file is rejected.'+'\n')
+                    response = result2
+                    break
+            elif toolName == 'runShellCommand':
+                print('The agent is trying to run a shell command, please review the command and decide if it is correct.'+'\n')
+                print('The command is:')
+                print(value['action_requests'][0]['args']['command']+'\n')
+                decision = input('Decision: approve or reject? (a/r): ')
+                if decision == 'a':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'approve'}]}),config=config)
+                    response = result2
+                    continue
+                elif decision == 'r':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'reject'}]}),config=config)
+                    print('The attempt to run the shell command is rejected.'+'\n')
+                    response = result2
+                    break
+            elif toolName == 'runCode':
+                print('The agent is trying to run code, please review the request and decide if it is correct.'+'\n')
+                print('The request is:')
+                print(value['action_requests'][0].get('args', {})+'\n')
+                decision = input('Decision: approve or reject? (a/r): ')
+                if decision == 'a':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'approve'}]}),config=config)
+                    response = result2
+                    continue
+                elif decision == 'r':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'reject'}]}),config=config)
+                    print('The attempt to run code is rejected.'+'\n')
+                    response = result2
+                    break
+            else:
+                action_args = value['action_requests'][0].get('args', {})
+                print(f'The agent is trying to run tool: {toolName}')
+                if action_args:
+                    print('Tool arguments:')
+                    print(action_args)
+                decision = input('Decision: approve or reject? (a/r): ')
+                if decision == 'a':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'approve'}]}),config=config)
+                    response = result2
+                    continue
+                elif decision == 'r':
+                    result2 = self.agent.invoke(Command(resume={'decisions':[{'type':'reject'}]}),config=config)
+                    print('The attempt to run the tool is rejected.'+'\n')
+                    response = result2
+                    break
         return response["messages"][-1].content
 
     def resume_action(self, threadId: int, decision: dict) -> str:

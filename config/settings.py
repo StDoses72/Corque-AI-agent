@@ -13,7 +13,7 @@ class Settings:
         self.emailPass = os.getenv('EMAIL_PASS')
         self.smtpServer = os.getenv('SMTP_SERVER')
         self.imapServer = os.getenv('IMAP_SERVER')
-        self.modelName = "gpt-oss:120b"#'qwen3:8b'
+        self.modelName = "qwen3-next:80b"#'qwen3:8b'
         self.codingModelName = 'minimax-m2.1:cloud'
         self.apiKey = os.getenv('DEDALUS_API_KEY')
         self.dataBasePath = baseDir / 'data' / 'CorqueDB.db'

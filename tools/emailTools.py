@@ -17,6 +17,7 @@ def sendEmail(recipientEmail,subject,body,fromWho = None):
     Sends an email to a specified recipient with a subject and message body. (向指定收件人发送电子邮件)
     If the email fails to send, return an error message.
     Remember, the body should not contain email closing signature or sender name.
+    CRITICAL: YOU MUST USE THIS TOOL TO SEND EMAILS.
 
     Args:
         recipientEmail (str): The complete email address of the recipient (e.g., 'example@gmail.com').

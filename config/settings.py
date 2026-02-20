@@ -13,13 +13,13 @@ class Settings:
         self.emailPass = os.getenv('EMAIL_PASS')
         self.smtpServer = os.getenv('SMTP_SERVER')
         self.imapServer = os.getenv('IMAP_SERVER')
-        self.modelName = "qwen3-next:80b"#'qwen3:8b'
-        self.codingModelName = 'minimax-m2.1:cloud'
+        self.modelName = "glm-4.7-flash"#'qwen3:8b'
+        self.codingModelName = 'qwen3-coder-next:q4_K_M'
         self.apiKey = os.getenv('DEDALUS_API_KEY')
         self.dataBasePath = baseDir / 'data' / 'CorqueDB.db'
         self.localTimeZone = str(get_localzone())
-        self.senderName = os.getenv('SENDER_NAME') or ''
-        self.userName = os.getenv('USER_NAME') or ''
+        self.senderName = os.getenv('SENDER_NAME') or "Corque"
+        self.userName = os.getenv('USER_NAME') or "Corque"
         self.region = os.getenv('REGION') or ''
         self.numOfThreads = os.cpu_count()
         self.tavilyApiKey = os.getenv('TAVILY_API_KEY')

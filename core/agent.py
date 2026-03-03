@@ -2,7 +2,7 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from config.settings import settings
-from tools import getWeather, sendEmail, getUnReademail, addTodo, getUTCNow, getTodoListinDaysFromNow, convertUTCEpochToISO, convertUTCToLocal, deleteTodo, getMostRecentTodo, changeTodoStatus, basicWebSearch, dailyNewsSearch, load_skill, generateCode, runCode, readFile, writeFile, runShellCommand, systemInfo
+from tools import getWeather, sendEmail, getUnReademail, addTodo, getUTCNow, getTodoListinDaysFromNow, convertUTCEpochToISO, convertUTCToLocal, deleteTodo, getMostRecentTodo, changeTodoStatus, basicWebSearch, dailyNewsSearch, load_skill, generateCode, runCode, readFile, writeFile, runShellCommand, systemInfo, remember, recall
 from langchain.agents.middleware import HumanInTheLoopMiddleware,LLMToolSelectorMiddleware
 from langgraph.types import Command
 from langchain_openai import ChatOpenAI
@@ -28,20 +28,16 @@ class Agent:
         - You have the power to execute system commands. USE IT WISELY.
         - If a task requires information you don't have, DO NOT ASK THE USER. **FIND IT YOURSELF.**
 
-        # MEMORY FILE
-
-        Once you think something can be useful for your future tasks, write it to a file called "memory.md" in your current working directory, not any other place.
-        The format of the memory file should be:
-        - The date and time of the memory
-        - The memory content
-        - The source of the memory
-        - The context of the memory
-        - The relevance of the memory to your current task
-        - The action you took based on the memory
-        - The result of the action
-
-        Your memory file should be updated regularly, not just when you think something is useful.
-        You can read the memory file anytime you want to get the information you need.
+        # MEMORY SYSTEM
+        You have access to a long-term memory system via the `remember` and `recall` tools.
+        
+        **WHEN TO USE MEMORY:**
+        1. **SAVE (remember)**: When you learn something valuable that should persist across sessions (e.g., user preferences, project paths, completed milestones).
+           - Do NOT save trivial conversation history.
+           - Use descriptive categories and tags.
+        2. **RETRIEVE (recall)**: Before asking the user for information you might already know, try to `recall` it first.
+        
+        The memory is stored in a structured file (`memory.md`) in your working directory.
 
         # TOOLS
         1. **PARALLEL EXECUTION (Efficiency)**:
@@ -144,7 +140,9 @@ class Agent:
             readFile,
             writeFile,
             runShellCommand,
-            systemInfo
+            systemInfo,
+            remember,
+            recall
         ]
         self.model = ChatOllama(
             model=settings.modelName,
